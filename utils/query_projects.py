@@ -7,11 +7,14 @@ import pandas as pd # type: ignore
 from constants import *
 
 SEARCH_PATTERN = "[0-9]+_[0-9]+_[0-9]+_[0-9]+.*.final.vcf"
+SEARCH_PATTERN = "batch_analysis_statistics.tsv"
+
 # SEARCH_PATTERN = "*"
 
 def generate_completed_sample_names(curr_directory,
                                     save=True,
-                                    overwrite=False):
+                                    overwrite=False,
+                                    search_pattern=SEARCH_PATTERN):
     """Generates a set of completed sample names based on file patterns.
     
     Searches for files matching a specific pattern (defined by `SEARCH_PATTERN`)
@@ -34,26 +37,27 @@ def generate_completed_sample_names(curr_directory,
         project=project_id,
         recurse=True,
         folder=curr_directory,
-        name=SEARCH_PATTERN,
+        name=search_pattern,
         name_mode='regexp',
         describe=True
     )
     
-    print("Done loading filenames!")
+    tmp_batch_dir = "./tmp/verify_complete_samples/"
+    os.makedirs(tmp_batch_dir, exist_ok=True)
+    
     results = set()
-    
-    # get relevant json file here
-    
-    with tqdm() as pbar:
-        # ensure list is identical here
-        for f in files:
-            curr_fname = f['describe']['name']
-            # this assumes that batch_merged_mt_coverage file is generated last therefore signaling completion but i could be wrong
-            sample_names = curr_fname.split(".")[0]
-            sample_name_t = sample_names.split("_")
+
+
+    files = list(files)
+    for f in tqdm(files):
+        curr_fname = f['describe']['id']
+        
+        dxpy.download_dxfile(curr_fname, filename=f"{tmp_batch_dir}tmpfile.txt")
+        samples = list(pd.read_csv(f"{tmp_batch_dir}tmpfile.txt", sep='\t', header=0)['s'])
+        for sample in samples:
+            sample_name_t = sample.split("_")
             if len(sample_name_t) == 4:
                 results.add(sample_name_t[0])
-                pbar.update(1)
 
     if save:
         if not os.path.isfile(COMPLETED_SAMPLE_LIST_PATH_03):
@@ -65,7 +69,6 @@ def generate_completed_sample_names(curr_directory,
             lst.sort()
             with open(COMPLETED_SAMPLE_LIST_PATH_03, 'a') as f:
                 f.writelines("%s\n" % l for l in lst)
-
 
     return results
     

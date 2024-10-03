@@ -159,7 +159,10 @@ class DNANexusJobManager:
                 self.write_to_log(f"UPDATE_LOG\t{get_curr_time()}\t{job_name} : {job_id} finished with success {is_success}")
                 if is_success:
                     self.track_successes(job_name, job_id)
-                    self.completed_samples = generate_completed_sample_names(f"{M3_500K_FOLDER_NAME}/v2.6_Multi_batch_{job_name}", save=True, overwrite=True)
+                    samples_completed_in_job = generate_completed_sample_names(f"{M3_500K_FOLDER_NAME}/v2.6_Multi_batch_{job_name}", save=True, overwrite=True)
+                    with open(COMPLETED_SAMPLE_LIST_PATH_03, "a") as f:
+                        for sample in samples_completed_in_job:
+                            f.write(f"{sample}\n")
                 else:
                     # if job failed, track failure
                     self.track_failures(job_name, job_id)
