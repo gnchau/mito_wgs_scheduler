@@ -39,5 +39,7 @@ provides a job management system for DNANexus, allowing for efficiently monitori
 - `queue_job_n_samples(n_samples_to_queue)`: Queues a specific number of samples for processing.
 
 to use:
-`screen -r`
-`python3 manage_queue.py`
+```
+screen -r
+python3 manage_queue.py
+```
