@@ -38,6 +38,6 @@ provides a job management system for DNANexus, allowing for efficiently monitori
 - `get_status_jobs(status)`: Retrieves the current status of jobs.
 - `queue_job_n_samples(n_samples_to_queue)`: Queues a specific number of samples for processing.
 
-  to use:
-  screen -r
-  python3 manage_queue.py
+to use:
+`screen -r`
+`python3 manage_queue.py`
