@@ -166,10 +166,12 @@ class DNANexusJobManager:
                 else:
                     # if job failed, track failure
                     self.track_failures(job_name, job_id)
-                    
+
                 # remove from active batches
                 print(f"{get_curr_time()} Removing {job_name} from queue.")
                 del self.active_jobs[job_name]
+                # upload to gs://ukb_500k/queue_status
+                
 
         self.completed_samples = read_file_at_path(COMPLETED_SAMPLE_LIST_PATH_03)
         self.write_to_log(f"UPDATE_LOG\t{get_curr_time()}\tnum completed samples: {len(self.completed_samples)}\tqueue size: {self.queue_size}\tcompleted {self.num_completed_jobs} batches this session")
@@ -226,7 +228,7 @@ class DNANexusJobManager:
         batch_names = queue_jobs(refresh_checkpoint_list=False, 
                 comparison=False, 
                 n_samples=n_samples_to_queue, 
-                sleep=1, 
+                sleep=60, 
                 parallel=True, 
                 batch_size=self.batch_size,
                 ignore_set=ignore_set_t,
@@ -237,7 +239,7 @@ class DNANexusJobManager:
 if __name__ == "__main__":
     print("Starting.")
     job_manager = DNANexusJobManager(queue_size=360, batch_size=40, n_machines=3, 
-                                     check_history=120, 
+                                     check_history=150, 
                                      refresh_completed_jobs=False,
                                      reload_sample_list=False)
     job_manager.run()
