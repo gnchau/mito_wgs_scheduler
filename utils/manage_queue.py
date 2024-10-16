@@ -33,7 +33,8 @@ class DNANexusJobManager:
         self.batch_size = batch_size
         
         if poll_interval is None:
-            self.poll_interval_monitor = int(2 * 60)
+            self.poll_interval_monitor = int(10 * 60)
+            # self.poll_interval_monitor = int(2 * 60)
             # self.poll_interval_check_completed = int(2.2 * 60)
         else:
             self.poll_interval_monitor = poll_interval["monitor"]
@@ -211,7 +212,8 @@ class DNANexusJobManager:
         assert(status in self.STATUS_SET)
         # might need to add a small buffer here
         print(f"Searching most recent {self.check_history} jobs to find '{status}' analyses.")
-        dx_api_list_analyses = subprocess.run(['dx', 'find', 'analyses', '--trees', 
+        dx_api_list_analyses = subprocess.run(['dx', 'find', 'analyses', '--project', PROJECT_NAMES[1], '--origin-jobs',
+                                               '--name', 'MitochondriaPipeline*',
                                                '--num-results', f'{self.check_history}'], 
                                             capture_output=True, text=True).stdout.split('\n')
         
@@ -239,7 +241,7 @@ class DNANexusJobManager:
 if __name__ == "__main__":
     print("Starting.")
     job_manager = DNANexusJobManager(queue_size=360, batch_size=40, n_machines=3, 
-                                     check_history=150, 
+                                     check_history=110, 
                                      refresh_completed_jobs=False,
                                      reload_sample_list=False)
     job_manager.run()
