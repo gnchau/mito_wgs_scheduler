@@ -256,7 +256,7 @@ class DNANexusJobManager:
 if __name__ == "__main__":
     print("Starting.")
     job_manager = DNANexusJobManager(queue_size=360, batch_size=40, n_machines=3, 
-                                     check_history=110, 
+                                     check_history=120, 
                                      refresh_completed_jobs=False,
                                      reload_sample_list=False)
     job_manager.run()
