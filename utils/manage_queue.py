@@ -224,10 +224,12 @@ class DNANexusJobManager:
         assert(status in self.STATUS_SET)
         # might need to add a small buffer here
         print(f"Searching most recent {self.check_history} jobs to find '{status}' analyses.")
-        dx_api_list_analyses = subprocess.run(['dx', 'find', 'analyses', '--project', PROJECT_NAMES[1], '--origin-jobs',
-                                               '--name', 'MitochondriaPipeline*',
-                                               '--num-results', f'{self.check_history}'], 
-                                            capture_output=True, text=True).stdout.split('\n')
+        arr = ['dx', 'find', 'analyses', 
+               '--project', PROJECT_NAMES[1], 
+               '--origin-jobs',
+               '--name', 'MitochondriaPipeline*',
+               '--num-results', f'{self.check_history}']
+        dx_api_list_analyses = subprocess.run(arr, capture_output=True, text=True).stdout.split('\n')
         
         # returns a map of job name -> analysis id
         return dict(
