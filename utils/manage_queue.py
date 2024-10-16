@@ -192,7 +192,7 @@ class DNANexusJobManager:
 
     def confirm_batch_files(self, job_name):
         files = dxpy.find_data_objects(
-            project=PROJECTS["mitochrondria-03"],
+            project=PROJECTS["mitochondria-03"],
             recurse=True,
             folder=f"{M3_500K_FOLDER_NAME}/v2.6_Multi_batch_{job_name}",
             name=self.BATCH_SEARCH_PATTERN,
