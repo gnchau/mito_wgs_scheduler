@@ -52,7 +52,7 @@ LINE_LENGTH = 20
 COMPARISON_GRAPHS_OUT = "../comparison_plots"
 
 def assert_correct_project():
-    project_name, project_id = "mitochondria-03", PROJECTS["mitochrondria-03"]
+    project_name, project_id = "mitochondria-03", PROJECTS["mitochondria-03"]
     assert project_name == PROJECT_NAMES[1]
     return project_name, project_id
 
