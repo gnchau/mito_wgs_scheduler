@@ -54,7 +54,9 @@ class DNANexusJobManager:
         self.queue_size = queue_size
         
         if refresh_completed_jobs:
-            self.get_status_jobs("done")
+            new_jobs = self.get_status_jobs("done")
+        else:
+            new_jobs = None
         
         # root jobs is a dict of [json job description name] : [analysis ID]
         if os.path.exists(self.completed_jobs_path):
@@ -68,8 +70,9 @@ class DNANexusJobManager:
             self.completed_jobs = {}
             self.completed_set = set()
             self.num_completed_jobs = 0
-        
+                     
         self.active_jobs = self.get_status_jobs("in_progress")
+        print(f'Found {str(len(self.active_jobs))} active jobs.')
         
         self.n_machines = n_machines
 
@@ -86,6 +89,14 @@ class DNANexusJobManager:
              open(self.failed_jobs_path, 'a').close()
              self.failed_jobs = set()
 
+        if new_jobs is not None:
+            print(f'Searched {str(self.check_history)} recently completed jobs and found {str(len(new_jobs))}.')
+            new_jobs_f = {k: v for k, v in new_jobs.items() if k not in self.completed_set}
+            print(f'Of these, {str(len(new_jobs_f))} were not previously recorded.')
+            self.active_jobs.update(new_jobs_f)
+            print(f'Tracking {str(len(self.active_jobs))} jobs, a subset of which may be completed.')
+            self.update_completed_jobs()
+                     
         self.write_to_log(f'INIT MESSAGE: Starting runs with n_machines={self.n_machines}, batch_size={self.batch_size}. Current time is {get_curr_time()}.')
         if reload_sample_list:
             self.completed_samples = generate_completed_sample_names(M3_500K_FOLDER_NAME, search_pattern=self.ALL_DIR_SEARCH_PATTERN, overwrite=True)
@@ -154,9 +165,10 @@ class DNANexusJobManager:
         
         for job_name, job_id in list(currently_active_jobs.items()): 
             # if job is not in progress, either done successfully or failed for some reason
-            if check_job_completed(job_id):
+            job_status = get_job_status(job_id)
+            if job_status in ['failed', 'done', 'terminated']:
                 self.num_completed_jobs += 1
-                is_success = check_job_success(job_id) and self.confirm_batch_files(job_name)
+                is_success = (job_status == 'done') and self.confirm_batch_files(job_name)
                 self.write_to_log(f"UPDATE_LOG\t{get_curr_time()}\t{job_name} : {job_id} finished with success {is_success}")
                 if is_success:
                     self.track_successes(job_name, job_id)
