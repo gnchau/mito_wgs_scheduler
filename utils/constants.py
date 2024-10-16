@@ -5,7 +5,7 @@ DESCRIBE_PROPERTIES = ['id', 'project', 'class', 'sponsored', 'name', 'types', '
                         'hidden', 'links', 'folder', 'tags', 'created', 'modified', 'createdBy', 'media', 
                         'archivalState', 'size', 'cloudAccount']
 
-PROJECT_NAMES = ["mitochrondrial-02", "mitochrondria-03"]
+PROJECT_NAMES = ["mitochrondrial-02", "mitochondria-03"]
 PROJECTS = {PROJECT_NAMES[0] : "project-G92qjkjJKqV4240b3jzyxb92", 
             PROJECT_NAMES[1] : "project-GbqfBQ8Jg52pv4zyq1fZJB9G"}
 JSON_STAT_M2 = "../mito_02_stats.json"
