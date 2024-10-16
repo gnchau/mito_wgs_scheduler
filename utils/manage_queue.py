@@ -228,7 +228,8 @@ class DNANexusJobManager:
                '--project', PROJECT_NAMES[1], 
                '--origin-jobs',
                '--name', 'MitochondriaPipeline*',
-               '--num-results', f'{self.check_history}']
+               '--num-results', f'{self.check_history}',
+               '--state', f'{status}']
         dx_api_list_analyses = subprocess.run(arr, capture_output=True, text=True).stdout.split('\n')
         
         # returns a map of job name -> analysis id
