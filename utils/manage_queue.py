@@ -33,7 +33,8 @@ class DNANexusJobManager:
         self.batch_size = batch_size
         
         if poll_interval is None:
-            self.poll_interval_monitor = int(2 * 60)
+            self.poll_interval_monitor = int(10 * 60)
+            # self.poll_interval_monitor = int(2 * 60)
             # self.poll_interval_check_completed = int(2.2 * 60)
         else:
             self.poll_interval_monitor = poll_interval["monitor"]
@@ -53,7 +54,9 @@ class DNANexusJobManager:
         self.queue_size = queue_size
         
         if refresh_completed_jobs:
-            self.get_status_jobs("done")
+            new_jobs = self.get_status_jobs("done")
+        else:
+            new_jobs = None
         
         # root jobs is a dict of [json job description name] : [analysis ID]
         if os.path.exists(self.completed_jobs_path):
@@ -67,8 +70,9 @@ class DNANexusJobManager:
             self.completed_jobs = {}
             self.completed_set = set()
             self.num_completed_jobs = 0
-        
+                     
         self.active_jobs = self.get_status_jobs("in_progress")
+        print(f'Found {str(len(self.active_jobs))} active jobs.')
         
         self.n_machines = n_machines
 
@@ -85,6 +89,14 @@ class DNANexusJobManager:
              open(self.failed_jobs_path, 'a').close()
              self.failed_jobs = set()
 
+        if new_jobs is not None:
+            print(f'Searched {str(self.check_history)} recently completed jobs and found {str(len(new_jobs))}.')
+            new_jobs_f = {k: v for k, v in new_jobs.items() if k not in self.completed_set}
+            print(f'Of these, {str(len(new_jobs_f))} were not previously recorded.')
+            self.active_jobs.update(new_jobs_f)
+            print(f'Tracking {str(len(self.active_jobs))} jobs, a subset of which may be completed.')
+            self.update_completed_jobs()
+                     
         self.write_to_log(f'INIT MESSAGE: Starting runs with n_machines={self.n_machines}, batch_size={self.batch_size}. Current time is {get_curr_time()}.')
         if reload_sample_list:
             self.completed_samples = generate_completed_sample_names(M3_500K_FOLDER_NAME, search_pattern=self.ALL_DIR_SEARCH_PATTERN, overwrite=True)
@@ -153,9 +165,10 @@ class DNANexusJobManager:
         
         for job_name, job_id in list(currently_active_jobs.items()): 
             # if job is not in progress, either done successfully or failed for some reason
-            if check_job_completed(job_id):
+            job_status = get_job_status(job_id)
+            if job_status in ['failed', 'done', 'terminated']:
                 self.num_completed_jobs += 1
-                is_success = check_job_success(job_id) and self.confirm_batch_files(job_name)
+                is_success = (job_status == 'done') and self.confirm_batch_files(job_name)
                 self.write_to_log(f"UPDATE_LOG\t{get_curr_time()}\t{job_name} : {job_id} finished with success {is_success}")
                 if is_success:
                     self.track_successes(job_name, job_id)
@@ -179,7 +192,7 @@ class DNANexusJobManager:
 
     def confirm_batch_files(self, job_name):
         files = dxpy.find_data_objects(
-            project=PROJECTS["mitochrondria-03"],
+            project=PROJECTS["mitochondria-03"],
             recurse=True,
             folder=f"{M3_500K_FOLDER_NAME}/v2.6_Multi_batch_{job_name}",
             name=self.BATCH_SEARCH_PATTERN,
@@ -211,9 +224,13 @@ class DNANexusJobManager:
         assert(status in self.STATUS_SET)
         # might need to add a small buffer here
         print(f"Searching most recent {self.check_history} jobs to find '{status}' analyses.")
-        dx_api_list_analyses = subprocess.run(['dx', 'find', 'analyses', '--trees', 
-                                               '--num-results', f'{self.check_history}'], 
-                                            capture_output=True, text=True).stdout.split('\n')
+        arr = ['dx', 'find', 'analyses', 
+               '--project', PROJECT_NAMES[1], 
+               '--origin-jobs',
+               '--name', 'MitochondriaPipeline*',
+               '--num-results', f'{self.check_history}',
+               '--state', f'{status}']
+        dx_api_list_analyses = subprocess.run(arr, capture_output=True, text=True).stdout.split('\n')
         
         # returns a map of job name -> analysis id
         return dict(
@@ -239,7 +256,7 @@ class DNANexusJobManager:
 if __name__ == "__main__":
     print("Starting.")
     job_manager = DNANexusJobManager(queue_size=360, batch_size=40, n_machines=3, 
-                                     check_history=150, 
+                                     check_history=120, 
                                      refresh_completed_jobs=False,
                                      reload_sample_list=False)
     job_manager.run()
